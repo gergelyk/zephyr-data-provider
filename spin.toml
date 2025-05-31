@@ -1,0 +1,25 @@
+spin_manifest_version = 2
+
+[application]
+name = "zephyr-data-provider"
+version = "0.1.0"
+authors = ["gkrason"]
+description = "Data provider for https://cat.zephyrapp.nz"
+
+[variables]
+api_token = { required = true }
+
+[[trigger.http]]
+route = "/..."
+component = "zephyr-data-provider"
+
+[component.zephyr-data-provider]
+source = "target/wasm32-wasip1/release/zephyr_data_provider.wasm"
+allowed_outbound_hosts = ["https://www.meteoclimatic.net"]
+
+[component.zephyr-data-provider.build]
+command = "cargo build --target wasm32-wasip1 --release"
+watch = ["src/**/*.rs", "Cargo.toml"]
+
+[component.zephyr-data-provider.variables]
+api_token = "{{ api_token }}"
