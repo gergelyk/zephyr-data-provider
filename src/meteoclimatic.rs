@@ -59,6 +59,7 @@ pub struct Measurement {
     wind_direction: Option<f64>,
     gusts_speed: Option<u64>,
     temperature: Option<f64>,
+    last_update_utc: String,
 }
 
 fn wind_direction_to_degrees(direction: &str) -> Option<f64> {
@@ -262,6 +263,19 @@ fn consume_span(
             .map(|row| row.text().collect::<Vec<&str>>().join("").trim().to_owned())
             .collect::<Vec<String>>();
 
+        if let Some(timestamp) = rows.get(1) {
+            match collect_last_update_utc(timestamp.to_owned()) {
+                Ok(last_update_utc) => {
+                    measurement.last_update_utc = last_update_utc;
+                }
+                Err(e) => {
+                    anyhow::bail!("[{}]: {}", vendor_id, e);
+                }
+            }
+        } else {
+            anyhow::bail!("[{}]: Wind information not available", vendor_id);
+        }
+
         if let Some(temp) = rows.get(2) {
             if let Ok(temperature) = collect_temp_info(temp.to_owned()) {
                 measurement.temperature = Some(temperature);
@@ -332,6 +346,24 @@ fn collect_station_info(span: ElementRef<'_>) -> anyhow::Result<(String, i64)> {
     };
 
     Ok((name, elevation))
+}
+
+fn collect_last_update_utc(line: String) -> anyhow::Result<String> {
+    println!("Collecting update time from: {}", line);
+    let line = if let Some(line_stripped) = line.strip_prefix("Actualizado:") {
+        line_stripped
+    } else {
+        anyhow::bail!("Invalid last update format: {}", line);
+    };
+
+    println!("Collecting update time from: {}", line);
+    let line = if let Some(line_stripped) = line.strip_suffix("UTC") {
+        line_stripped
+    } else {
+        anyhow::bail!("Invalid last update format: {}", line);
+    };
+
+    Ok(line.trim().to_owned())
 }
 
 fn collect_wind_info(line: String, with_direction: bool) -> anyhow::Result<(u64, Option<f64>)> {
