@@ -1,3 +1,5 @@
+mod common;
+mod meteocat;
 mod meteoclimatic;
 
 use spin_sdk::http::{IntoResponse, Request, Response};
@@ -68,7 +70,7 @@ fn handle_get_units(req: &Request) -> anyhow::Result<Response> {
     if let Some(resp) = check_token(req)? {
         return Ok(resp);
     };
-    let units = meteoclimatic::get_units();
+    let units = common::get_units();
     let json = serde_json::to_string(&units)?;
     Ok(json_ok_resp(json.as_str()))
 }
@@ -77,7 +79,11 @@ async fn handle_get_stations(req: &Request) -> anyhow::Result<Response> {
     if let Some(resp) = check_token(req)? {
         return Ok(resp);
     };
-    let (stations, _) = meteoclimatic::fetch_data().await?;
+    let (stations1, _) = meteoclimatic::fetch_data().await?;
+    let (stations2, _) = meteocat::fetch_data().await?;
+    let stations = stations1.into_iter()
+        .chain(stations2)
+        .collect::<Vec<_>>();
     let json = serde_json::to_string(&stations)?;
     Ok(json_ok_resp(json.as_str()))
 }
@@ -86,7 +92,11 @@ async fn handle_get_measurements(req: &Request) -> anyhow::Result<Response> {
     if let Some(resp) = check_token(req)? {
         return Ok(resp);
     };
-    let (_, measurements) = meteoclimatic::fetch_data().await?;
+    let (_, measurements1) = meteoclimatic::fetch_data().await?;
+    let (_, measurements2) = meteocat::fetch_data().await?;
+    let measurements = measurements1.into_iter()
+        .chain(measurements2)
+        .collect::<Vec<_>>();
     let json = serde_json::to_string(&measurements)?;
     Ok(json_ok_resp(json.as_str()))
 }

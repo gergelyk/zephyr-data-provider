@@ -1,11 +1,11 @@
 use encoding_rs::ISO_8859_15;
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
-
+use crate::common::{parse_selector, wind_direction_to_degrees, Measurement, Station};
 use anyhow::anyhow;
 use html_escape::decode_html_entities;
-use scraper::{ElementRef, Html, Node, Selector};
-use serde::Serialize;
+use scraper::{ElementRef, Html, Node};
+use chrono::{NaiveTime, Utc, TimeZone, Duration};
 
 // Two reference points has been selected to convert from
 // pixel location (x, y) to geolocation (long, lat).
@@ -31,70 +31,6 @@ fn xy_to_long_lat(x: f64, y: f64) -> (f64, f64) {
     let long = XM * x + XC;
     let lat = YM * y + YC;
     (long, lat)
-}
-
-fn parse_selector(selector: &str) -> anyhow::Result<Selector> {
-    Selector::parse(selector).map_err(|e| anyhow!(e.to_string()))
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct Station {
-    id: String,
-    name: String,
-    elevation: i64,
-    url: String,
-    lat: f64,
-    long: f64,
-
-    // Station is available only when it has a name and if wind
-    // speed and direction are available. Wind gusts are optional.
-    #[serde(skip_serializing)]
-    available: bool,
-}
-
-#[derive(Debug, Default, Serialize)]
-pub struct Measurement {
-    station_id: String,
-    wind_speed: u64,
-    wind_direction: Option<f64>,
-    gusts_speed: Option<u64>,
-    temperature: Option<f64>,
-    last_update_utc: String,
-}
-
-fn wind_direction_to_degrees(direction: &str) -> Option<f64> {
-    match direction.to_uppercase().as_str() {
-        "N" => Some(0.0),
-        "NNE" => Some(22.5),
-        "NE" => Some(45.0),
-        "ENE" => Some(67.5),
-        "E" => Some(90.0),
-        "ESE" => Some(112.5),
-        "SE" => Some(135.0),
-        "SSE" => Some(157.5),
-        "S" => Some(180.0),
-        "SSW" => Some(202.5),
-        "SW" => Some(225.0),
-        "WSW" => Some(247.5),
-        "W" => Some(270.0),
-        "WNW" => Some(292.5),
-        "NW" => Some(315.0),
-        "NNW" => Some(337.5),
-        _ => None,
-    }
-}
-
-pub fn get_units() -> HashMap<&'static str, &'static str> {
-    let units: HashMap<&str, &str> = HashMap::from([
-        ("wind_speed", "km/h"),
-        ("wind_direction", "°"),
-        ("gusts_speed", "km/h"),
-        ("temperature", "°C"),
-        ("lat", "°"),
-        ("long", "°"),
-        ("elevation", "m"),
-    ]);
-    units
 }
 
 pub async fn fetch_data() -> anyhow::Result<(Vec<Station>, Vec<Measurement>)> {
@@ -266,7 +202,9 @@ fn consume_span(
         if let Some(timestamp) = rows.get(1) {
             match collect_last_update_utc(timestamp.to_owned()) {
                 Ok(last_update_utc) => {
-                    measurement.last_update_utc = last_update_utc;
+                    let last_update = parse_time_utc(&last_update_utc)?;
+                    measurement.last_update_utc = last_update_utc; // TO BE REMOVED
+                    measurement.last_update = last_update.format("%Y-%m-%dT%H:%MZ").to_string();
                 }
                 Err(e) => {
                     anyhow::bail!("[{}]: {}", vendor_id, e);
@@ -308,6 +246,18 @@ fn consume_span(
         anyhow::bail!("[{}] Station not found", vendor_id);
     }
     Ok(())
+}
+
+fn parse_time_utc(time_utc_str: &String) -> Result<chrono::DateTime<Utc>, anyhow::Error> {
+    let utc_now = Utc::now();
+    let time_utc = NaiveTime::parse_from_str(time_utc_str, "%H:%M")
+        .map_err(|e| anyhow::anyhow!("Invalid time format: {}", e))?;
+    let date_time_utc = utc_now.date_naive().and_time(time_utc);
+    let mut date_time = Utc::from_utc_datetime(&Utc, &date_time_utc);
+    if date_time > utc_now {
+        date_time = date_time - Duration::days(1);
+    }
+    Ok(date_time)
 }
 
 fn collect_station_info(span: ElementRef<'_>) -> anyhow::Result<(String, i64)> {

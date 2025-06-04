@@ -15,7 +15,7 @@ component = "zephyr-data-provider"
 
 [component.zephyr-data-provider]
 source = "target/wasm32-wasip1/release/zephyr_data_provider.wasm"
-allowed_outbound_hosts = ["https://www.meteoclimatic.net"]
+allowed_outbound_hosts = ["https://www.meteoclimatic.net", "https://www.meteo.cat"]
 
 [component.zephyr-data-provider.build]
 command = "cargo build --target wasm32-wasip1 --release"
