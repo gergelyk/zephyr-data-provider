@@ -81,6 +81,7 @@ async fn handle_get_stations(req: &Request) -> anyhow::Result<Response> {
     };
     let (stations1, _) = meteoclimatic::fetch_data().await?;
     let (stations2, _) = meteocat::fetch_data().await?;
+    
     let stations = stations1.into_iter()
         .chain(stations2)
         .collect::<Vec<_>>();
@@ -94,6 +95,7 @@ async fn handle_get_measurements(req: &Request) -> anyhow::Result<Response> {
     };
     let (_, measurements1) = meteoclimatic::fetch_data().await?;
     let (_, measurements2) = meteocat::fetch_data().await?;
+
     let measurements = measurements1.into_iter()
         .chain(measurements2)
         .collect::<Vec<_>>();

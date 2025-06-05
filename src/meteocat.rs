@@ -7,6 +7,8 @@ use serde::Deserialize;
 use spin_sdk::http::{Method, Request, Response};
 use std::collections::HashMap;
 
+const BASE_URL: &str = "https://www.meteo.cat/observacions/xema";
+
 #[allow(non_snake_case)]
 #[derive(Debug, Deserialize)]
 struct MeasurementRaw {
@@ -37,10 +39,8 @@ type MeasurementsRaw = HashMap<String, HashMap<String, MeasurementRaw>>;
 type StationsRaw = HashMap<String, StacionRaw>;
 
 pub async fn fetch_data() -> anyhow::Result<(Vec<Station>, Vec<Measurement>)> {
-    println!("Fetching...");
-    let url = "https://www.meteo.cat/observacions/xema";
-
-    let request = Request::builder().method(Method::Get).uri(url).build();
+    println!("[meteocat] Fetching...");
+    let request = Request::builder().method(Method::Get).uri(BASE_URL).build();
 
     let response: Response = spin_sdk::http::send(request).await?;
     let (body, _, decoding_errors) = UTF_8.decode(response.body());
@@ -97,7 +97,8 @@ pub async fn fetch_data() -> anyhow::Result<(Vec<Station>, Vec<Measurement>)> {
         if let Some(wind_speed) = measurement_raw.velocitatVent {
             if let Some(station_raw) = stations_raw.get(vendor_id) {
                 let station_url = format!(
-                    "https://www.meteo.cat/observacions/xema/dades?codi={}",
+                    "{}/dades?codi={}",
+                    BASE_URL,
                     vendor_id
                 );
                 let station_id = format!("{:x}", md5::compute(&station_url));
@@ -122,7 +123,7 @@ pub async fn fetch_data() -> anyhow::Result<(Vec<Station>, Vec<Measurement>)> {
                 available_stations.push(station);
                 measurements.push(measurement);
             } else {
-                println!("Station details unavailable: {}", vendor_id);
+                println!("[{}] Station details unavailable", vendor_id);
             }
         }
     }

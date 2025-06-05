@@ -34,7 +34,7 @@ fn xy_to_long_lat(x: f64, y: f64) -> (f64, f64) {
 }
 
 pub async fn fetch_data() -> anyhow::Result<(Vec<Station>, Vec<Measurement>)> {
-    println!("Fetching...");
+    println!("[meteoclimatic] Fetching...");
     let url = "https://www.meteoclimatic.net/mapinfo/ESCAT";
 
     let request = Request::builder().method(Method::Get).uri(url).build();
@@ -299,14 +299,12 @@ fn collect_station_info(span: ElementRef<'_>) -> anyhow::Result<(String, i64)> {
 }
 
 fn collect_last_update_utc(line: String) -> anyhow::Result<String> {
-    println!("Collecting update time from: {}", line);
     let line = if let Some(line_stripped) = line.strip_prefix("Actualizado:") {
         line_stripped
     } else {
         anyhow::bail!("Invalid last update format: {}", line);
     };
 
-    println!("Collecting update time from: {}", line);
     let line = if let Some(line_stripped) = line.strip_suffix("UTC") {
         line_stripped
     } else {
