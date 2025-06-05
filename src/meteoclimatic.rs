@@ -233,8 +233,8 @@ fn consume_span(
             anyhow::bail!("[{}]: Wind information not available", vendor_id);
         }
 
-        // Meteoclimatic does not provide gusts speed. They only
-        // provide max wind speed in the last 24 hours.
+        // Meteoclimatic does not provide gusts speed. They only provide max wind speed
+        // of the day (counting perhaps from midnight UTC).
         measurement.gusts_speed = None;
 
         station.available = true;
