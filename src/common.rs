@@ -63,7 +63,7 @@ pub fn get_units() -> HashMap<&'static str, &'static str> {
         ("lat", "°"),
         ("long", "°"),
         ("elevation", "m"),
-        ("last_update", "ISO 8601")
+        ("last_update", "ISO 8601"),
     ]);
     units
 }

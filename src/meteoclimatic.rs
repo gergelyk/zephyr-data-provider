@@ -1,11 +1,11 @@
-use encoding_rs::ISO_8859_15;
-use spin_sdk::http::{Method, Request, Response};
-use std::collections::HashMap;
 use crate::common::{parse_selector, wind_direction_to_degrees, Measurement, Station};
 use anyhow::anyhow;
+use chrono::{Duration, NaiveTime, TimeZone, Utc};
+use encoding_rs::ISO_8859_15;
 use html_escape::decode_html_entities;
 use scraper::{ElementRef, Html, Node};
-use chrono::{NaiveTime, Utc, TimeZone, Duration};
+use spin_sdk::http::{Method, Request, Response};
+use std::collections::HashMap;
 
 // Two reference points has been selected to convert from
 // pixel location (x, y) to geolocation (long, lat).
@@ -233,11 +233,9 @@ fn consume_span(
             anyhow::bail!("[{}]: Wind information not available", vendor_id);
         }
 
-        if let Some(gusts) = rows.get(5) {
-            if let Ok((speed, _)) = collect_wind_info(gusts.to_owned(), false) {
-                measurement.gusts_speed = Some(speed);
-            }
-        }
+        // Meteoclimatic does not provide gusts speed. They only
+        // provide max wind speed in the last 24 hours.
+        measurement.gusts_speed = None;
 
         station.available = true;
         measurements.push(measurement);

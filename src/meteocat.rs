@@ -96,11 +96,7 @@ pub async fn fetch_data() -> anyhow::Result<(Vec<Station>, Vec<Measurement>)> {
     for (vendor_id, measurement_raw) in last_measurements_raw.iter() {
         if let Some(wind_speed) = measurement_raw.velocitatVent {
             if let Some(station_raw) = stations_raw.get(vendor_id) {
-                let station_url = format!(
-                    "{}/dades?codi={}",
-                    BASE_URL,
-                    vendor_id
-                );
+                let station_url = format!("{}/dades?codi={}", BASE_URL, vendor_id);
                 let station_id = format!("{:x}", md5::compute(&station_url));
                 let measurement = Measurement {
                     station_id: station_id.clone(),
