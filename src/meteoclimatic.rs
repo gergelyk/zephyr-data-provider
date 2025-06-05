@@ -245,14 +245,14 @@ fn consume_span(
     Ok(())
 }
 
-fn parse_time_utc(time_utc_str: &String) -> Result<chrono::DateTime<Utc>, anyhow::Error> {
+fn parse_time_utc(time_utc_str: &str) -> Result<chrono::DateTime<Utc>, anyhow::Error> {
     let utc_now = Utc::now();
     let time_utc = NaiveTime::parse_from_str(time_utc_str, "%H:%M")
         .map_err(|e| anyhow::anyhow!("Invalid time format: {}", e))?;
     let date_time_utc = utc_now.date_naive().and_time(time_utc);
     let mut date_time = Utc::from_utc_datetime(&Utc, &date_time_utc);
     if date_time > utc_now {
-        date_time = date_time - Duration::days(1);
+        date_time -= Duration::days(1);
     }
     Ok(date_time)
 }
