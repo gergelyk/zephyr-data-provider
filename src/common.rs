@@ -25,7 +25,6 @@ pub struct Measurement {
     pub wind_direction: Option<f64>,
     pub gusts_speed: Option<u64>,
     pub temperature: Option<f64>,
-    pub last_update_utc: String, // TO BE REMOVED
     pub last_update: String,
 }
 

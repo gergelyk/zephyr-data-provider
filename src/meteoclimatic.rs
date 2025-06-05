@@ -203,7 +203,6 @@ fn consume_span(
             match collect_last_update_utc(timestamp.to_owned()) {
                 Ok(last_update_utc) => {
                     let last_update = parse_time_utc(&last_update_utc)?;
-                    measurement.last_update_utc = last_update_utc; // TO BE REMOVED
                     measurement.last_update = last_update.format("%Y-%m-%dT%H:%MZ").to_string();
                 }
                 Err(e) => {

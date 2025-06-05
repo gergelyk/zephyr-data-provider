@@ -108,7 +108,6 @@ pub async fn fetch_data() -> anyhow::Result<(Vec<Station>, Vec<Measurement>)> {
                     wind_direction: measurement_raw.direccioVent,
                     gusts_speed: measurement_raw.ratxaMaximaVent.map(|v| v.round() as u64),
                     temperature: measurement_raw.temperatura,
-                    last_update_utc: last_timestamp.as_str()[last_timestamp.len()-6..last_timestamp.len()-1].to_string(), // TO BE REMOVED
                     last_update: last_timestamp.to_string(),
                 };
                 let station = Station {
